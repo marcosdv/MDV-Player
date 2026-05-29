@@ -1,0 +1,24 @@
+<resources>
+    <string name="app_name">MDV Player</string>
+    <string name="select_folder">Selecionar Pasta</string>
+    <string name="no_songs_found">Nenhuma música encontrada</string>
+    <string name="player">Player</string>
+    <string name="song_list">Músicas</string>
+    <string name="equalizer">Equalizador</string>
+    <string name="shuffle">Aleatório</string>
+    <string name="play">Play</string>
+    <string name="pause">Pausa</string>
+    <string name="next">Próxima</string>
+    <string name="previous">Anterior</string>
+    <string name="forward_30">Avançar 30s</string>
+    <string name="rewind_30">Retroceder 30s</string>
+    <string name="dark_theme">Tema Escuro</string>
+    <string name="light_theme">Tema Claro</string>
+    <string name="unknown_title">Título Desconhecido</string>
+    <string name="unknown_artist">Artista Desconhecido</string>
+    <string name="unknown_album">Álbum Desconhecido</string>
+    <string name="notification_channel_name">Reprodução de Música</string>
+    <string name="notification_channel_description">Controles de reprodução do MDV Player</string>
+    <string name="scanning_folder">Verificando pasta...</string>
+    <string name="preset_custom">Personalizado</string>
+</resources>
