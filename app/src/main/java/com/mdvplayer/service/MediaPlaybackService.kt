@@ -97,18 +97,21 @@ class MediaPlaybackService : MediaLibraryService() {
             musicRepository.getSongs()
                 .distinctUntilChanged()
                 .collect { songs ->
-                    if (songs == cachedSongs) return@collect
+                    if (songs.size == cachedSongs.size && songs.map { it.uri } == cachedSongs.map { it.uri }) {
+                        return@collect
+                    }
+                    
                     val wasEmpty = cachedSongs.isEmpty()
                     cachedSongs = songs
 
-                    // Load items if the player is currently empty
-                    if (player.mediaItemCount == 0 && songs.isNotEmpty()) {
+                    // Only load items if the player is totally empty and NOT playing
+                    if (player.mediaItemCount == 0 && songs.isNotEmpty() && !player.isPlaying) {
                         val mediaItems = songs.map { it.toMediaItem() }
                         player.setMediaItems(mediaItems)
                         player.prepare()
                     }
 
-                    // Notify browser if list changed
+                    // Notify browser if list changed significantly
                     if (!wasEmpty) {
                         mediaLibrarySession.notifyChildrenChanged(SONGS_ID, songs.size, null)
                     }
@@ -267,14 +270,9 @@ class MediaPlaybackService : MediaLibraryService() {
             controller: MediaSession.ControllerInfo,
             mediaItems: List<MediaItem>
         ): ListenableFuture<List<MediaItem>> {
-            // Resolve media items with playback URIs (needed for Android Auto)
+            // Resolve media items with full metadata and playback URIs
             val resolved = mediaItems.map { item ->
-                val song = cachedSongs.find { it.uri == item.mediaId }
-                if (song != null) {
-                    item.buildUpon()
-                        .setUri(Uri.parse(song.uri))
-                        .build()
-                } else item
+                cachedSongs.find { it.uri == item.mediaId }?.toMediaItem() ?: item
             }
             return Futures.immediateFuture(resolved)
         }
@@ -282,24 +280,21 @@ class MediaPlaybackService : MediaLibraryService() {
 }
 
 fun Song.toMediaItem(): MediaItem {
-    val artworkUri = if (hasAlbumArt) {
-        Uri.parse(uri)
-    } else {
-        Uri.parse("android.resource://com.mdvplayer/drawable/logo_mdv")
+    val metadata = MediaMetadata.Builder()
+        .setTitle(title)
+        .setArtist(artist)
+        .setAlbumTitle(album)
+        .setIsBrowsable(false)
+        .setIsPlayable(true)
+    
+    if (!hasAlbumArt) {
+        // Use a more robust resource URI format
+        metadata.setArtworkUri(Uri.parse("android.resource://com.mdvplayer/drawable/logo_mdv"))
     }
 
     return MediaItem.Builder()
         .setMediaId(uri)
         .setUri(Uri.parse(uri))
-        .setMediaMetadata(
-            MediaMetadata.Builder()
-                .setTitle(title)
-                .setArtist(artist)
-                .setAlbumTitle(album)
-                .setArtworkUri(artworkUri)
-                .setIsBrowsable(false)
-                .setIsPlayable(true)
-                .build()
-        )
+        .setMediaMetadata(metadata.build())
         .build()
 }
