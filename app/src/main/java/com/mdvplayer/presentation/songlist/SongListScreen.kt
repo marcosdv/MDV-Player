@@ -150,24 +150,17 @@ private fun SongItem(song: Song, onClick: () -> Unit) {
                 .background(MaterialTheme.colorScheme.surfaceVariant),
             contentAlignment = Alignment.Center
         ) {
-            if (song.hasAlbumArt) {
-                AsyncImage(
-                    model = ImageRequest.Builder(context)
-                        .data(AlbumArtModel(Uri.parse(song.uri)))
-                        .crossfade(true)
-                        .build(),
-                    contentDescription = "Capa",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize()
-                )
-            } else {
-                Icon(
-                    imageVector = Icons.Rounded.MusicNote,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(28.dp)
-                )
-            }
+            AsyncImage(
+                model = ImageRequest.Builder(context)
+                    .data(if (song.hasAlbumArt) AlbumArtModel(Uri.parse(song.uri)) else com.mdvplayer.R.drawable.logo_mdv)
+                    .error(com.mdvplayer.R.drawable.logo_mdv)
+                    .fallback(com.mdvplayer.R.drawable.logo_mdv)
+                    .crossfade(true)
+                    .build(),
+                contentDescription = "Capa",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
         }
 
         Spacer(modifier = Modifier.width(12.dp))

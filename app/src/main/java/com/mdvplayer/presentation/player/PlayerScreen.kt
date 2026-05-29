@@ -178,24 +178,17 @@ private fun AlbumArtCard(songUri: String?, modifier: Modifier = Modifier) {
             .background(MaterialTheme.colorScheme.surfaceVariant),
         contentAlignment = Alignment.Center
     ) {
-        if (songUri != null) {
-            AsyncImage(
-                model = ImageRequest.Builder(context)
-                    .data(AlbumArtModel(Uri.parse(songUri)))
-                    .crossfade(true)
-                    .build(),
-                contentDescription = "Capa do álbum",
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize()
-            )
-        } else {
-            Icon(
-                imageVector = Icons.Rounded.MusicNote,
-                contentDescription = "Sem capa",
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(80.dp)
-            )
-        }
+        AsyncImage(
+            model = ImageRequest.Builder(context)
+                .data(songUri?.let { AlbumArtModel(Uri.parse(it)) } ?: R.drawable.logo_mdv)
+                .error(R.drawable.logo_mdv)
+                .fallback(R.drawable.logo_mdv)
+                .crossfade(true)
+                .build(),
+            contentDescription = "Capa do álbum",
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize()
+        )
     }
 }
 
