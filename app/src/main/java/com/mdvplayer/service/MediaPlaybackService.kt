@@ -100,6 +100,12 @@ class MediaPlaybackService : MediaLibraryService() {
         return mediaLibrarySession
     }
 
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        player.pause()
+        stopSelf()
+        super.onTaskRemoved(rootIntent)
+    }
+
     override fun onDestroy() {
         mediaLibrarySession.release()
         player.release()
