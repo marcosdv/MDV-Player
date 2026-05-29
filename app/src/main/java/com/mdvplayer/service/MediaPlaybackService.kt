@@ -3,11 +3,14 @@ package com.mdvplayer.service
 import android.app.PendingIntent
 import android.content.Intent
 import android.net.Uri
+import android.os.Bundle
+import androidx.annotation.OptIn
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.*
 import com.google.common.collect.ImmutableList
@@ -19,6 +22,7 @@ import com.mdvplayer.domain.model.Song
 import com.mdvplayer.domain.repository.MusicRepository
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 
@@ -37,8 +41,12 @@ class MediaPlaybackService : MediaLibraryService() {
     companion object {
         const val ROOT_ID = "MDV_ROOT"
         const val SONGS_ID = "MDV_SONGS"
+        const val CUSTOM_COMMAND_REWIND_30 = "REWIND_30"
+        const val CUSTOM_COMMAND_FORWARD_30 = "FORWARD_30"
+        const val CUSTOM_COMMAND_SHUFFLE = "SHUFFLE"
     }
 
+    @OptIn(UnstableApi::class)
     override fun onCreate() {
         super.onCreate()
 
@@ -50,6 +58,8 @@ class MediaPlaybackService : MediaLibraryService() {
         player = ExoPlayer.Builder(this)
             .setAudioAttributes(audioAttributes, /* handleAudioFocus= */ true)
             .setHandleAudioBecomingNoisy(true)
+            .setSeekBackIncrementMs(30_000L)
+            .setSeekForwardIncrementMs(30_000L)
             .build()
 
         // Persist audio session ID so Equalizer can connect
@@ -84,15 +94,25 @@ class MediaPlaybackService : MediaLibraryService() {
 
         // Observe songs for Android Auto browsing and initial loading
         serviceScope.launch {
-            musicRepository.getSongs().collect { songs ->
-                cachedSongs = songs
-                // Load items if the player is currently empty
-                if (player.mediaItemCount == 0 && songs.isNotEmpty()) {
-                    val mediaItems = songs.map { it.toMediaItem() }
-                    player.setMediaItems(mediaItems)
-                    player.prepare()
+            musicRepository.getSongs()
+                .distinctUntilChanged()
+                .collect { songs ->
+                    if (songs == cachedSongs) return@collect
+                    val wasEmpty = cachedSongs.isEmpty()
+                    cachedSongs = songs
+
+                    // Load items if the player is currently empty
+                    if (player.mediaItemCount == 0 && songs.isNotEmpty()) {
+                        val mediaItems = songs.map { it.toMediaItem() }
+                        player.setMediaItems(mediaItems)
+                        player.prepare()
+                    }
+
+                    // Notify browser if list changed
+                    if (!wasEmpty) {
+                        mediaLibrarySession.notifyChildrenChanged(SONGS_ID, songs.size, null)
+                    }
                 }
-            }
         }
     }
 
@@ -114,6 +134,62 @@ class MediaPlaybackService : MediaLibraryService() {
     }
 
     private inner class LibrarySessionCallback : MediaLibrarySession.Callback {
+
+        @OptIn(UnstableApi::class)
+        override fun onConnect(
+            session: MediaSession,
+            controller: MediaSession.ControllerInfo
+        ): MediaSession.ConnectionResult {
+            val connectionResult = super.onConnect(session, controller)
+            val sessionCommands = connectionResult.availableSessionCommands.buildUpon()
+                .add(SessionCommand(CUSTOM_COMMAND_REWIND_30, Bundle.EMPTY))
+                .add(SessionCommand(CUSTOM_COMMAND_FORWARD_30, Bundle.EMPTY))
+                .add(SessionCommand(CUSTOM_COMMAND_SHUFFLE, Bundle.EMPTY))
+                .build()
+
+            val playerCommands = connectionResult.availablePlayerCommands.buildUpon()
+                .add(Player.COMMAND_SET_SHUFFLE_MODE)
+                .build()
+
+            val rewindButton = CommandButton.Builder()
+                .setSessionCommand(SessionCommand(CUSTOM_COMMAND_REWIND_30, Bundle.EMPTY))
+                .setIconResId(com.mdvplayer.R.drawable.ic_rewind_30)
+                .setDisplayName("Voltar 30s")
+                .build()
+
+            val shuffleButton = CommandButton.Builder()
+                .setSessionCommand(SessionCommand(CUSTOM_COMMAND_SHUFFLE, Bundle.EMPTY))
+                .setIconResId(com.mdvplayer.R.drawable.ic_shuffle)
+                .setDisplayName("Aleatório")
+                .build()
+
+            val forwardButton = CommandButton.Builder()
+                .setSessionCommand(SessionCommand(CUSTOM_COMMAND_FORWARD_30, Bundle.EMPTY))
+                .setIconResId(com.mdvplayer.R.drawable.ic_forward_30)
+                .setDisplayName("Avançar 30s")
+                .build()
+
+            return MediaSession.ConnectionResult.AcceptedResultBuilder(session)
+                .setAvailableSessionCommands(sessionCommands)
+                .setAvailablePlayerCommands(playerCommands)
+                .setCustomLayout(ImmutableList.of(rewindButton, shuffleButton, forwardButton))
+                .build()
+        }
+
+        override fun onCustomCommand(
+            session: MediaSession,
+            controller: MediaSession.ControllerInfo,
+            customCommand: SessionCommand,
+            args: Bundle
+        ): ListenableFuture<SessionResult> {
+            when (customCommand.customAction) {
+                CUSTOM_COMMAND_REWIND_30 -> player.seekBack()
+                CUSTOM_COMMAND_FORWARD_30 -> player.seekForward()
+                CUSTOM_COMMAND_SHUFFLE -> player.shuffleModeEnabled = !player.shuffleModeEnabled
+                else -> return super.onCustomCommand(session, controller, customCommand, args)
+            }
+            return Futures.immediateFuture(SessionResult(SessionResult.RESULT_SUCCESS))
+        }
 
         override fun onGetLibraryRoot(
             session: MediaLibrarySession,
@@ -206,6 +282,12 @@ class MediaPlaybackService : MediaLibraryService() {
 }
 
 fun Song.toMediaItem(): MediaItem {
+    val artworkUri = if (hasAlbumArt) {
+        Uri.parse(uri)
+    } else {
+        Uri.parse("android.resource://com.mdvplayer/drawable/logo_mdv")
+    }
+
     return MediaItem.Builder()
         .setMediaId(uri)
         .setUri(Uri.parse(uri))
@@ -214,6 +296,7 @@ fun Song.toMediaItem(): MediaItem {
                 .setTitle(title)
                 .setArtist(artist)
                 .setAlbumTitle(album)
+                .setArtworkUri(artworkUri)
                 .setIsBrowsable(false)
                 .setIsPlayable(true)
                 .build()
