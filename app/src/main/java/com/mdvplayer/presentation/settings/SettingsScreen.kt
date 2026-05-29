@@ -10,10 +10,12 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.FolderOpen
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mdvplayer.R
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -22,6 +24,8 @@ fun SettingsScreen(
     onNavigateBack: () -> Unit,
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
+    val folderPath by viewModel.folderPath.collectAsStateWithLifecycle()
+
     val folderPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocumentTree()
     ) { uri: Uri? ->
@@ -50,7 +54,9 @@ fun SettingsScreen(
         ) {
             ListItem(
                 headlineContent = { Text(stringResource(R.string.select_folder)) },
-                supportingContent = { Text("Escolha o local das suas músicas") },
+                supportingContent = { 
+                    Text(folderPath ?: "Escolha o local das suas músicas") 
+                },
                 leadingContent = {
                     Icon(Icons.Rounded.FolderOpen, contentDescription = null)
                 },

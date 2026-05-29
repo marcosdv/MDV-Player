@@ -82,10 +82,16 @@ class MediaPlaybackService : MediaLibraryService() {
             .setSessionActivity(pendingIntent)
             .build()
 
-        // Observe songs for Android Auto browsing
+        // Observe songs for Android Auto browsing and initial loading
         serviceScope.launch {
             musicRepository.getSongs().collect { songs ->
                 cachedSongs = songs
+                // Load items if the player is currently empty
+                if (player.mediaItemCount == 0 && songs.isNotEmpty()) {
+                    val mediaItems = songs.map { it.toMediaItem() }
+                    player.setMediaItems(mediaItems)
+                    player.prepare()
+                }
             }
         }
     }
