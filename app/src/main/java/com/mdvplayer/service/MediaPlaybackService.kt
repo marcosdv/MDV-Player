@@ -176,6 +176,16 @@ class MediaPlaybackService : MediaLibraryService() {
                 .build()
         }
 
+        override fun onSearch(
+            session: MediaLibrarySession,
+            browser: MediaSession.ControllerInfo,
+            query: String,
+            params: LibraryParams?
+        ): ListenableFuture<LibraryResult<Void>> {
+            // Implementação mínima de busca para visibilidade em assistentes e Waze
+            return Futures.immediateFuture(LibraryResult.ofError(LibraryResult.RESULT_ERROR_NOT_SUPPORTED))
+        }
+
         override fun onCustomCommand(
             session: MediaSession,
             controller: MediaSession.ControllerInfo,
@@ -203,6 +213,7 @@ class MediaPlaybackService : MediaLibraryService() {
                         .setIsBrowsable(true)
                         .setIsPlayable(false)
                         .setTitle("MDV Player")
+                        .setArtworkUri(Uri.parse("android.resource://com.mdvplayer/drawable/logo_mdv"))
                         .build()
                 )
                 .build()
