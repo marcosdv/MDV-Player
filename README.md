@@ -1,4 +1,4 @@
-# MDV Player 🎵
+# MDV Player - Android Edtion 🎵
 
 O **MDV Player** é um player de música moderno para Android, desenvolvido com as tecnologias mais recentes do ecossistema Android para proporcionar uma experiência de áudio fluida e elegante.
 
