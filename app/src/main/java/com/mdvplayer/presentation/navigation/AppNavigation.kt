@@ -6,6 +6,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.mdvplayer.presentation.equalizer.EqualizerScreen
 import com.mdvplayer.presentation.player.PlayerScreen
+import com.mdvplayer.presentation.settings.SettingsScreen
 import com.mdvplayer.presentation.songlist.SongListScreen
 
 @Composable
@@ -17,7 +18,8 @@ fun AppNavigation(navController: NavHostController) {
         composable(Screen.Player.route) {
             PlayerScreen(
                 onNavigateToSongList = { navController.navigate(Screen.SongList.route) },
-                onNavigateToEqualizer = { navController.navigate(Screen.Equalizer.route) }
+                onNavigateToEqualizer = { navController.navigate(Screen.Equalizer.route) },
+                onNavigateToSettings = { navController.navigate(Screen.Settings.route) }
             )
         }
         composable(Screen.SongList.route) {
@@ -32,6 +34,11 @@ fun AppNavigation(navController: NavHostController) {
         }
         composable(Screen.Equalizer.route) {
             EqualizerScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+        composable(Screen.Settings.route) {
+            SettingsScreen(
                 onNavigateBack = { navController.popBackStack() }
             )
         }

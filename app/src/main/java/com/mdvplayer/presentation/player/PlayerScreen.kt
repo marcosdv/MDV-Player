@@ -21,6 +21,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import androidx.compose.ui.res.stringResource
+import com.mdvplayer.R
 import com.mdvplayer.presentation.theme.LocalDarkTheme
 import com.mdvplayer.utils.AlbumArtModel
 
@@ -29,11 +31,13 @@ import com.mdvplayer.utils.AlbumArtModel
 fun PlayerScreen(
     onNavigateToSongList: () -> Unit,
     onNavigateToEqualizer: () -> Unit,
+    onNavigateToSettings: () -> Unit,
     viewModel: PlayerViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val colorScheme = MaterialTheme.colorScheme
     val isDark = LocalDarkTheme.current
+    var showMenu by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -52,6 +56,29 @@ fun PlayerScreen(
                             imageVector = Icons.Rounded.Tune,
                             contentDescription = "Equalizador"
                         )
+                    }
+                    Box {
+                        IconButton(onClick = { showMenu = true }) {
+                            Icon(
+                                imageVector = Icons.Rounded.MoreVert,
+                                contentDescription = "Menu"
+                            )
+                        }
+                        DropdownMenu(
+                            expanded = showMenu,
+                            onDismissRequest = { showMenu = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.settings)) },
+                                onClick = {
+                                    showMenu = false
+                                    onNavigateToSettings()
+                                },
+                                leadingIcon = {
+                                    Icon(Icons.Rounded.Settings, contentDescription = null)
+                                }
+                            )
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
