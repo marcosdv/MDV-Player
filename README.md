@@ -1,5 +1,7 @@
 # MDV Player - Android Edtion 🎵
 
+![Badge](https://img.shields.io/badge/Marcos%20Dias%20Vendramini-Android-green)
+
 O **MDV Player** é um player de música moderno para Android, desenvolvido com as tecnologias mais recentes do ecossistema Android para proporcionar uma experiência de áudio fluida e elegante.
 
 ## ✨ Funcionalidades
@@ -35,4 +37,5 @@ O **MDV Player** é um player de música moderno para Android, desenvolvido com 
 4. Execute o app em um dispositivo físico ou emulador com Android 5.0 (API 21) ou superior.
 
 ---
-Desenvolvido por [Seu Nome/Github]
+Desenvolvido por Marcos Dias Vendramini
+![Badge](https://img.shields.io/badge/Marcos%20Dias%20Vendramini-Android-green)
