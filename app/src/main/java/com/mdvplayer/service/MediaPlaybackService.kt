@@ -147,23 +147,19 @@ class MediaPlaybackService : MediaLibraryService() {
             val sessionCommands = connectionResult.availableSessionCommands.buildUpon()
                 .add(SessionCommand(CUSTOM_COMMAND_REWIND_30, Bundle.EMPTY))
                 .add(SessionCommand(CUSTOM_COMMAND_FORWARD_30, Bundle.EMPTY))
-                .add(SessionCommand(CUSTOM_COMMAND_SHUFFLE, Bundle.EMPTY))
                 .build()
 
             val playerCommands = connectionResult.availablePlayerCommands.buildUpon()
-                .add(Player.COMMAND_SET_SHUFFLE_MODE)
+                .add(Player.COMMAND_SEEK_TO_PREVIOUS)
+                .add(Player.COMMAND_SEEK_TO_NEXT)
+                .add(Player.COMMAND_SEEK_BACK)
+                .add(Player.COMMAND_SEEK_FORWARD)
                 .build()
 
             val rewindButton = CommandButton.Builder()
                 .setSessionCommand(SessionCommand(CUSTOM_COMMAND_REWIND_30, Bundle.EMPTY))
                 .setIconResId(com.mdvplayer.R.drawable.ic_rewind_30)
                 .setDisplayName("Voltar 30s")
-                .build()
-
-            val shuffleButton = CommandButton.Builder()
-                .setSessionCommand(SessionCommand(CUSTOM_COMMAND_SHUFFLE, Bundle.EMPTY))
-                .setIconResId(com.mdvplayer.R.drawable.ic_shuffle)
-                .setDisplayName("Aleatório")
                 .build()
 
             val forwardButton = CommandButton.Builder()
@@ -175,7 +171,8 @@ class MediaPlaybackService : MediaLibraryService() {
             return MediaSession.ConnectionResult.AcceptedResultBuilder(session)
                 .setAvailableSessionCommands(sessionCommands)
                 .setAvailablePlayerCommands(playerCommands)
-                .setCustomLayout(ImmutableList.of(rewindButton, shuffleButton, forwardButton))
+                .setCustomLayout(ImmutableList.of(rewindButton, forwardButton))
+                .setSessionExtras(connectionResult.sessionExtras ?: Bundle.EMPTY)
                 .build()
         }
 
